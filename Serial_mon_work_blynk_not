@@ -1,0 +1,80 @@
+
+#include <WiFi.h>
+#include <BlynkSimpleEsp32.h>
+#include "SDS011.h"
+#include "DHT.h"
+
+#define BLYNK_TEMPLATE_ID "TMPLTtUw3aPb"
+#define BLYNK_TEMPLATE_NAME "Living Sane"
+// #define BLYNK_AUTH_TOKEN "Le1pNdDBrs0jBm2qL3VKWulK3QBCF7ix"
+#define BLYNK_AUTH_TOKEN "38YW7uNne98RK9y42zLXh9Vf8CpmMegp"
+
+#define DHTPIN 15    // Digital pin connected to the DHT sensor
+#define DHTTYPE DHT22   // DHT 11
+
+DHT dht(DHTPIN, DHTTYPE);
+SDS011 my_sds;
+
+//char auth[] = "Le1pNdDBrs0jBm2qL3VKWulK3QBCF7ix";  // Not Upgraded
+char auth[] = "38YW7uNne98RK9y42zLXh9Vf8CpmMegp";  // Your Blynk project authentication token
+char ssid[] = "Mt.";  // Your WiFi SSID
+char pass[] = "vava@2026";  // Your WiFi password
+
+
+#ifdef ESP32
+HardwareSerial port(2);
+#endif
+
+float p10, p25; 
+int err;
+
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(115200);
+  // Blynk.begin(auth, ssid, pass);
+  WiFi.begin(ssid, pass);
+  my_sds.begin(&port);
+  dht.begin();
+  //WIFI CONNECTION
+  if(WiFi.status()!=WL_CONNECTED)
+  {
+    while (WiFi.status() != WL_CONNECTED) 
+    {
+      delay(100);
+      Serial.println("Searching for wifi...");
+    }
+    Serial.print("Connected to ");
+    Serial.println(ssid);
+  }
+   Blynk.config(auth);
+ // Blynk.begin(auth, ssid, pass);
+
+
+}
+
+void loop() {
+  // Serial.print("Hi...");
+
+  
+   Blynk.run();
+
+  // put your main code here, to run repeatedly:
+  float h = dht.readHumidity();
+  // Read temperature as Celsius (the default)
+  float t = dht.readTemperature();
+  // Read temperature as Fahrenheit (isFahrenheit = true)
+  float f = dht.readTemperature(true);
+  Serial.println("Humidity: " + String(h) + "%");
+  Serial.println("Temperature: " + String(t) + "°C");
+  err = my_sds.read(&p25, &p10);
+  Serial.println("P2.5: " + String(p25));
+  Serial.println("P10:  " + String(p10));
+  Serial.println("____________________________");
+
+
+  Blynk.virtualWrite(0, h);  // Send humidity data to Virtual Pin 5
+  Blynk.virtualWrite(1, t);  // Send temperature data to Virtual Pin 6
+  Blynk.virtualWrite(2, p25);  // Send PM2.5 data to Virtual Pin 5
+  Blynk.virtualWrite(3, p10);  // Send PM10 data to Virtual Pin 6
+  delay(1000);
+}
